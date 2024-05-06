@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisualVoice</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+        }
+        .container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .form-control {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+        .form-control:focus {
+            background-color: #333;
+            color: #fff;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+        .text-center {
+            text-align: center;
+        }
+        #media-player {
+            margin-top: 20px;
+        }
+        #result {
+            margin-bottom: 20px;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="text-center mb-4">
+            <img src="/api/static/assets/logo.png" alt="VisualVoice Logo" style="max-width: 150px;">
+        </div>
+        <!-- Title -->
+        <h1 class="text-center mb-4">VisualVoice</h1>
+        <!-- Upload Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <form id="upload-form" enctype="multipart/form-data" class="mb-3">
+                    <div class="mb-3 text-center">
+                        <input type="file" id="photo" name="photo" class="form-control" accept="image/jpeg, image/png">
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Media Player and Extracted Text Display -->
+        <div class="text-center mt-3">
+            <div id="result" class="mb-3"></div>
+            <div id="media-player">
+                <audio controls id="audio-player">
+                    <source src="" type="audio/mpeg" id="audio-source">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <script>
+        // Prevent default form submission behavior
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var formData = new FormData(this);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    // Display message
+                    document.getElementById('result').innerHTML = '<div class="text-center mb-3">' + data.message + '</div>';
+                    
+                    // Update audio source and play audio
+                    var audioPlayer = document.getElementById('audio-player');
+                    var audioSource = document.getElementById('audio-source');
+                    console.log('MP3 Path:', data.mp3_path); // Debugging message
+                    audioSource.src = data.mp3_path;
+                    audioPlayer.load();
+                    audioPlayer.play();
+
+                    // Display extracted text
+                    document.getElementById('result').innerHTML += '<div class="text-center">Extracted Text: ' + data.text + '</div>';
+                } else {
+                    // Display error message
+                    document.getElementById('result').innerText = data.error;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

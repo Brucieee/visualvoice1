@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 from flask_uploads import UploadSet, IMAGES, configure_uploads
 import pytesseract
 from PIL import Image
 import os
-import pyttsx3
-import subprocess
+from gtts import gTTS
+import os
 
 app = Flask(__name__)
 
@@ -16,7 +16,7 @@ configure_uploads(app, photos)
 # Homepage
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('upload.html')
 
 # Upload image and convert text to speech
 @app.route('/upload', methods=['POST'])
@@ -28,11 +28,11 @@ def upload():
         # Extract text from image
         text = extract_text(image_path)
 
-        # Convert text to speech and save as MP3
+        # Convert text to speech and get the path to the generated MP3 file
         mp3_path = convert_to_speech(text, filename)
 
         if mp3_path:
-            return jsonify({'message': 'Text converted to speech and saved as MP3', 'mp3_path': mp3_path})
+            return jsonify({'message': 'Text extracted successfully', 'text': text, 'mp3_path': mp3_path})
         else:
             return jsonify({'error': 'Error converting text to speech'})
     else:
@@ -48,30 +48,25 @@ def extract_text(image_path):
         print("Error during text extraction:", e)
         return None
 
-# Convert text to speech using eSpeak and save as MP3
+# Convert text to speech
 def convert_to_speech(text, filename):
     try:
-        # Initialize the eSpeak engine
-        engine = pyttsx3.init()
-
-        # Set properties (optional)
-        engine.setProperty('rate', 150)  # Speed of speech
-        engine.setProperty('volume', 0.9) # Volume (0.0 to 1.0)
-
-        # Convert text to speech
-        engine.say(text)
-
-        # Save speech to a file as MP3
-        mp3_output_folder = 'mp3_outputs'
-        os.makedirs(mp3_output_folder, exist_ok=True)
-
-        mp3_output_path = os.path.join(mp3_output_folder, os.path.splitext(filename)[0] + '.mp3')
-        engine.save_to_file(text, mp3_output_path)
-
-        # Run the eSpeak engine
-        engine.runAndWait()
-
-        return mp3_output_path  # Return the path to the saved MP3 file
+        # Generate speech using gTTS
+        tts = gTTS(text=text, lang='en')
+        
+        # Define the directory to save the MP3 file
+        save_dir = 'static/audio'
+        
+        # Create the directory if it doesn't exist
+        os.makedirs(save_dir, exist_ok=True)
+        
+        # Define the path to save the MP3 file
+        mp3_path = os.path.join(save_dir, f'{filename}.mp3')
+        
+        # Save the speech as an MP3 file
+        tts.save(mp3_path)
+        
+        return mp3_path
     except Exception as e:
         print("Error during text-to-speech conversion:", e)
         return None
