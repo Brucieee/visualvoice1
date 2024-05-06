@@ -71,5 +71,3 @@ def convert_to_speech(text, filename):
         print("Error during text-to-speech conversion:", e)
         return None
 
-if __name__ == '__main__':
-    app.run(debug=True)
